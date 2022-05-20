@@ -1,0 +1,6 @@
+.idea
+.vscode
+
+*.go
+!generate.go
+openapi.yaml

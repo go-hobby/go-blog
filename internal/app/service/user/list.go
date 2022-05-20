@@ -1,0 +1,51 @@
+package user
+
+import (
+	"context"
+	"go-blog/internal/app/model"
+	errorsx "go-blog/internal/app/pkg/errors"
+	"go-blog/internal/app/repository/user"
+)
+
+// ListRequest 用户列表请求参数
+type ListRequest struct {
+	Keyword string `json:"keyword" form:"keyword"`
+}
+
+// ListItem 用户列表项
+type ListItem struct {
+	Id    uint64 `json:"id"`
+	Name  string `json:"name"`
+	Age   int8   `json:"age"`
+	Phone string `json:"phone"`
+}
+
+// ListResponse 用户列表响应数据
+type ListResponse []*ListItem
+
+// List 用户列表
+func (s *Service) List(ctx context.Context, req ListRequest) (ListResponse, error) {
+	list, err := s.repo.FindList(
+		ctx,
+		user.FindListParam{Keyword: req.Keyword},
+		[]string{"*"},
+		"updated_at DESC",
+	)
+	if err != nil {
+		s.logger.Errorf("%s: %s", model.ErrDataQueryFailed, err)
+		return nil, errorsx.ServerError(errorsx.WithMessage(model.ErrDataQueryFailed.Error()))
+	}
+
+	resp := make(ListResponse, 0, len(list))
+
+	for _, item := range list {
+		resp = append(resp, &ListItem{
+			Id:    item.Id,
+			Name:  item.Name,
+			Age:   item.Age,
+			Phone: item.Phone,
+		})
+	}
+
+	return resp, nil
+}
